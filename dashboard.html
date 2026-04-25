@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Leads Dashboard — SiteRevive AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;font-family:'Inter',-apple-system,sans-serif;background:#F1F5F9;color:#0F172A;line-height:1.5}
+    :root{
+      --blue:#2563EB;--blue-dark:#1D4ED8;--blue-50:#EFF6FF;--blue-100:#DBEAFE;
+      --green:#10B981;--orange:#F59E0B;--red:#EF4444;--purple:#8B5CF6;
+      --dark:#0F172A;--dark-800:#1E293B;--dark-700:#334155;
+      --gray-600:#475569;--gray-500:#64748B;--gray-300:#CBD5E1;--gray-200:#E2E8F0;--gray-100:#F1F5F9;--gray-50:#F8FAFC;
+      --white:#FFFFFF;
+      --sidebar-w:240px;
+      --radius:10px;--radius-lg:16px;
+      --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+      --shadow-md:0 4px 16px rgba(0,0,0,.1);
+      --shadow-lg:0 16px 48px rgba(0,0,0,.15);
+    }
+    a{text-decoration:none;color:inherit}
+    button{font-family:inherit;cursor:pointer}
+    input,select,textarea{font-family:inherit}
+
+    /* ── LOGIN SCREEN ── */
+    #loginScreen{
+      position:fixed;inset:0;background:linear-gradient(135deg,#0F172A 0%,#1E3A5F 100%);
+      display:flex;align-items:center;justify-content:center;z-index:1000;
+    }
+    .login-card{background:#fff;border-radius:var(--radius-lg);padding:40px;width:100%;max-width:380px;box-shadow:var(--shadow-lg);text-align:center}
+    .login-logo{display:flex;align-items:center;justify-content:center;gap:10px;font-size:20px;font-weight:800;color:var(--dark);margin-bottom:8px}
+    .login-logo-icon{width:36px;height:36px;background:var(--blue);border-radius:9px;display:flex;align-items:center;justify-content:center}
+    .login-logo-icon svg{width:20px;height:20px;color:#fff}
+    .login-subtitle{font-size:14px;color:var(--gray-500);margin-bottom:28px}
+    .login-label{display:block;font-size:13px;font-weight:600;color:var(--dark-700);text-align:left;margin-bottom:8px}
+    .login-input{width:100%;padding:13px 16px;font-size:16px;border:2px solid var(--gray-200);border-radius:var(--radius);outline:none;text-align:center;letter-spacing:4px;transition:border-color .2s}
+    .login-input:focus{border-color:var(--blue)}
+    .login-btn{width:100%;margin-top:16px;background:var(--blue);color:#fff;border:none;padding:14px;font-size:16px;font-weight:700;border-radius:var(--radius);transition:background .2s}
+    .login-btn:hover{background:var(--blue-dark)}
+    .login-error{color:var(--red);font-size:13px;margin-top:10px;display:none}
+    .login-hint{font-size:12px;color:var(--gray-500);margin-top:14px}
+
+    /* ── APP LAYOUT ── */
+    #app{display:none;height:100vh;overflow:hidden}
+
+    /* Sidebar */
+    .sidebar{
+      position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);
+      background:var(--dark);display:flex;flex-direction:column;z-index:50;
+    }
+    .sidebar-logo{padding:22px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.07)}
+    .sidebar-logo-icon{width:32px;height:32px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .sidebar-logo-icon svg{width:17px;height:17px;color:#fff}
+    .sidebar-logo-text{font-size:16px;font-weight:800;color:#fff}
+    .sidebar-logo-text span{color:#60A5FA}
+    .sidebar-nav{flex:1;padding:16px 12px;display:flex;flex-direction:column;gap:4px}
+    .nav-item{
+      display:flex;align-items:center;gap:10px;padding:10px 12px;
+      border-radius:var(--radius);color:#94A3B8;font-size:14px;font-weight:500;
+      transition:all .15s;cursor:pointer;border:none;background:none;text-align:left;width:100%;
+    }
+    .nav-item svg{width:18px;height:18px;flex-shrink:0}
+    .nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+    .nav-item.active{background:rgba(37,99,235,.2);color:#60A5FA}
+    .sidebar-footer{padding:16px;border-top:1px solid rgba(255,255,255,.07)}
+    .sidebar-footer-link{display:flex;align-items:center;gap:8px;font-size:13px;color:#475569;transition:color .2s;padding:8px;border-radius:8px}
+    .sidebar-footer-link:hover{color:#fff;background:rgba(255,255,255,.06)}
+    .sidebar-footer-link svg{width:16px;height:16px}
+
+    /* Main area */
+    .main{margin-left:var(--sidebar-w);height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+
+    /* Top bar */
+    .topbar{
+      position:sticky;top:0;z-index:40;background:rgba(241,245,249,.95);
+      backdrop-filter:blur(8px);border-bottom:1px solid var(--gray-200);
+      padding:14px 28px;display:flex;align-items:center;justify-content:space-between;gap:16px;
+    }
+    .topbar-title{font-size:20px;font-weight:800;color:var(--dark)}
+    .topbar-right{display:flex;align-items:center;gap:12px}
+    .topbar-btn{
+      display:flex;align-items:center;gap:6px;padding:9px 16px;
+      font-size:14px;font-weight:600;border-radius:var(--radius);border:none;transition:all .2s;
+    }
+    .topbar-btn svg{width:16px;height:16px}
+    .btn-ghost{background:transparent;color:var(--gray-600);border:1px solid var(--gray-200)}
+    .btn-ghost:hover{background:var(--white);color:var(--dark)}
+    .btn-primary{background:var(--blue);color:#fff}
+    .btn-primary:hover{background:var(--blue-dark)}
+
+    /* Content */
+    .content{padding:28px;flex:1}
+
+    /* Stat cards */
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+    .stat-card{background:var(--white);border-radius:var(--radius-lg);padding:20px 22px;border:1px solid var(--gray-200);box-shadow:var(--shadow)}
+    .stat-label{font-size:12px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+    .stat-value{font-size:32px;font-weight:900;letter-spacing:-1px;line-height:1;color:var(--dark)}
+    .stat-change{font-size:13px;margin-top:6px;display:flex;align-items:center;gap:4px;font-weight:600}
+    .stat-change.up{color:var(--green)}
+    .stat-change.neutral{color:var(--gray-500)}
+    .stat-icon{float:right;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-top:-4px}
+    .stat-icon svg{width:22px;height:22px}
+
+    /* Filter bar */
+    .filter-bar{
+      background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);
+      padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;
+      box-shadow:var(--shadow);
+    }
+    .filter-search{
+      flex:1;min-width:200px;display:flex;align-items:center;gap:8px;
+      background:var(--gray-100);border-radius:var(--radius);padding:0 12px;
+    }
+    .filter-search svg{width:16px;height:16px;color:var(--gray-500);flex-shrink:0}
+    .filter-search input{border:none;background:transparent;padding:9px 0;font-size:14px;outline:none;width:100%;color:var(--dark)}
+    .filter-search input::placeholder{color:var(--gray-500)}
+    .filter-select{
+      padding:9px 12px;font-size:14px;border:1px solid var(--gray-200);border-radius:var(--radius);
+      outline:none;background:var(--white);color:var(--dark);transition:border-color .2s;
+    }
+    .filter-select:focus{border-color:var(--blue)}
+    .filter-count{font-size:13px;color:var(--gray-500);white-space:nowrap;margin-left:auto}
+
+    /* Table */
+    .table-card{background:var(--white);border-radius:var(--radius-lg);border:1px solid var(--gray-200);box-shadow:var(--shadow);overflow:hidden}
+    .table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse}
+    thead{background:var(--gray-50);border-bottom:1px solid var(--gray-200)}
+    th{padding:11px 16px;font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;text-align:left;cursor:pointer;user-select:none}
+    th:hover{color:var(--dark)}
+    th.sorted{color:var(--blue)}
+    tbody tr{border-bottom:1px solid var(--gray-100);transition:background .15s;cursor:pointer}
+    tbody tr:last-child{border-bottom:none}
+    tbody tr:hover{background:var(--blue-50)}
+    tbody tr.selected{background:var(--blue-100)}
+    td{padding:13px 16px;font-size:14px;vertical-align:middle}
+    .td-url{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;color:var(--dark)}
+    .td-url small{font-size:12px;color:var(--gray-500);font-weight:400;display:block;margin-top:1px}
+    .score-pill{display:inline-flex;align-items:center;justify-content:center;width:44px;height:26px;border-radius:99px;font-size:13px;font-weight:800}
+    .score-good{background:rgba(16,185,129,.12);color:var(--green)}
+    .score-mid{background:rgba(245,158,11,.12);color:var(--orange)}
+    .score-bad{background:rgba(239,68,68,.12);color:var(--red)}
+    .score-null{background:var(--gray-100);color:var(--gray-500)}
+    .status-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:12px;font-weight:700;white-space:nowrap}
+    .status-new{background:rgba(37,99,235,.1);color:var(--blue)}
+    .status-contacted{background:rgba(245,158,11,.1);color:var(--orange)}
+    .status-quoted{background:rgba(139,92,246,.1);color:var(--purple)}
+    .status-converted{background:rgba(16,185,129,.1);color:var(--green)}
+    .status-lost{background:rgba(239,68,68,.1);color:var(--red)}
+    .status-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+    .td-date{color:var(--gray-500);white-space:nowrap;font-size:13px}
+    .empty-state{padding:64px 24px;text-align:center}
+    .empty-state svg{width:48px;height:48px;color:var(--gray-300);margin:0 auto 16px}
+    .empty-state h3{font-size:18px;font-weight:700;color:var(--dark);margin-bottom:6px}
+    .empty-state p{font-size:14px;color:var(--gray-500)}
+
+    /* Detail Panel */
+    .detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:60;opacity:0;pointer-events:none;transition:opacity .25s}
+    .detail-overlay.open{opacity:1;pointer-events:all}
+    .detail-panel{
+      position:fixed;top:0;right:0;bottom:0;width:480px;background:var(--white);
+      z-index:61;box-shadow:var(--shadow-lg);transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
+      display:flex;flex-direction:column;overflow:hidden;
+    }
+    .detail-panel.open{transform:translateX(0)}
+    .detail-header{padding:20px 24px;border-bottom:1px solid var(--gray-200);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-shrink:0}
+    .detail-close{width:32px;height:32px;border-radius:8px;border:none;background:var(--gray-100);color:var(--gray-600);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+    .detail-close:hover{background:var(--gray-200);color:var(--dark)}
+    .detail-close svg{width:18px;height:18px}
+    .detail-title{font-size:16px;font-weight:800;color:var(--dark);word-break:break-all;line-height:1.3}
+    .detail-sub{font-size:13px;color:var(--gray-500);margin-top:3px}
+    .detail-body{flex:1;overflow-y:auto;padding:20px 24px}
+    .detail-footer{padding:16px 24px;border-top:1px solid var(--gray-200);display:flex;gap:10px;flex-shrink:0}
+    .detail-section{margin-bottom:24px}
+    .detail-section-title{font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+    .detail-scores{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
+    .dscore-card{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;text-align:center}
+    .dscore-num{font-size:28px;font-weight:900;letter-spacing:-1px;line-height:1}
+    .dscore-lbl{font-size:11px;color:var(--gray-500);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:3px}
+    .detail-field{margin-bottom:12px}
+    .detail-field label{display:block;font-size:12px;font-weight:600;color:var(--gray-500);margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px}
+    .detail-field-val{font-size:14px;color:var(--dark);font-weight:500}
+    .detail-field-val a{color:var(--blue);text-decoration:underline}
+    .status-select{padding:8px 12px;border:1px solid var(--gray-200);border-radius:var(--radius);font-size:14px;font-weight:600;outline:none;background:var(--white);transition:border-color .2s;width:100%}
+    .status-select:focus{border-color:var(--blue)}
+    .notes-input{width:100%;padding:10px 12px;border:1px solid var(--gray-200);border-radius:var(--radius);font-size:14px;font-family:inherit;outline:none;resize:vertical;min-height:80px;transition:border-color .2s;color:var(--dark)}
+    .notes-input:focus{border-color:var(--blue)}
+    .save-notes-btn{background:var(--blue);color:#fff;border:none;padding:8px 16px;font-size:14px;font-weight:700;border-radius:var(--radius);transition:background .2s}
+    .save-notes-btn:hover{background:var(--blue-dark)}
+    .issue-mini{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--gray-100);font-size:13px}
+    .issue-mini:last-child{border-bottom:none}
+    .issue-mini-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+    .issue-mini-text{flex:1;color:var(--dark-700)}
+    .issue-mini-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap}
+    .detail-action-btn{flex:1;padding:11px;font-size:14px;font-weight:700;border-radius:var(--radius);border:none;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
+    .detail-action-btn svg{width:16px;height:16px}
+    .btn-danger{background:rgba(239,68,68,.08);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+    .btn-danger:hover{background:rgba(239,68,68,.15)}
+    .btn-success{background:var(--green);color:#fff}
+    .btn-success:hover{background:#059669}
+
+    /* Toast */
+    #toast{position:fixed;bottom:24px;right:24px;z-index:999;background:var(--dark-800);color:#fff;font-size:14px;font-weight:600;padding:13px 20px;border-radius:var(--radius);border-left:4px solid var(--green);box-shadow:var(--shadow-lg);transform:translateY(60px);opacity:0;transition:all .35s cubic-bezier(.175,.885,.32,1.275);display:flex;align-items:center;gap:8px}
+    #toast.show{transform:translateY(0);opacity:1}
+    #toast svg{width:16px;height:16px;color:var(--green)}
+
+    /* Loading spinner */
+    .table-loading{padding:64px;text-align:center;color:var(--gray-500)}
+    .big-spinner{width:36px;height:36px;border:3px solid var(--gray-200);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Responsive */
+    @media(max-width:1100px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:768px){
+      .sidebar{transform:translateX(-100%)}
+      .main{margin-left:0}
+      .detail-panel{width:100%}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </div>
+      SiteRevive<span style="color:var(--blue)">AI</span>
+    </div>
+    <div class="login-subtitle">Leads Dashboard — Admin Access</div>
+    <label class="login-label" for="pinInput">Enter Access PIN</label>
+    <input type="password" id="pinInput" class="login-input" placeholder="••••" maxlength="8" onkeydown="if(event.key==='Enter')checkPin()"/>
+    <button class="login-btn" onclick="checkPin()">Unlock Dashboard</button>
+    <div class="login-error" id="pinError">Incorrect PIN. Try again.</div>
+    <div class="login-hint">Default PIN: <strong>1234</strong> — change it in dashboard.html</div>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="app">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </div>
+      <div class="sidebar-logo-text">SiteRevive<span>AI</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="showView('leads')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        All Leads
+      </button>
+      <button class="nav-item" onclick="filterByStatus('new')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        New Leads
+        <span id="newBadge" style="margin-left:auto;background:rgba(37,99,235,.2);color:#60A5FA;font-size:11px;font-weight:800;padding:2px 8px;border-radius:99px">0</span>
+      </button>
+      <button class="nav-item" onclick="filterByStatus('contacted')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        Contacted
+      </button>
+      <button class="nav-item" onclick="filterByStatus('converted')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+        Converted
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="audit.html" target="_blank" class="sidebar-footer-link">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        Open Audit Tool
+      </a>
+      <a href="index.html" target="_blank" class="sidebar-footer-link">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        View Website
+      </a>
+      <button class="sidebar-footer-link" style="border:none;background:none;width:100%;text-align:left" onclick="logout()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        Log Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="topbar-title" id="topbarTitle">All Leads</div>
+      <div class="topbar-right">
+        <div id="lastRefresh" style="font-size:12px;color:var(--gray-500)"></div>
+        <button class="topbar-btn btn-ghost" onclick="loadLeads()">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Refresh
+        </button>
+        <button class="topbar-btn btn-ghost" onclick="exportCSV()">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Export CSV
+        </button>
+        <a href="audit.html" target="_blank" class="topbar-btn btn-primary" style="display:flex;align-items:center;gap:6px;color:#fff">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          New Audit
+        </a>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div style="overflow:hidden">
+            <div class="stat-icon" style="background:rgba(37,99,235,.08);float:right">
+              <svg fill="none" viewBox="0 0 24 24" stroke="var(--blue)" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <div class="stat-label">Total Leads</div>
+            <div class="stat-value" id="statTotal">—</div>
+            <div class="stat-change neutral" id="statTotalSub">All time</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div style="overflow:hidden">
+            <div class="stat-icon" style="background:rgba(37,99,235,.08);float:right">
+              <svg fill="none" viewBox="0 0 24 24" stroke="var(--blue)" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            </div>
+            <div class="stat-label">New (Uncontacted)</div>
+            <div class="stat-value" id="statNew" style="color:var(--blue)">—</div>
+            <div class="stat-change neutral">Awaiting outreach</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div style="overflow:hidden">
+            <div class="stat-icon" style="background:rgba(16,185,129,.08);float:right">
+              <svg fill="none" viewBox="0 0 24 24" stroke="var(--green)" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div class="stat-label">Converted</div>
+            <div class="stat-value" id="statConverted" style="color:var(--green)">—</div>
+            <div class="stat-change up" id="statConvRate">—% close rate</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div style="overflow:hidden">
+            <div class="stat-icon" style="background:rgba(245,158,11,.08);float:right">
+              <svg fill="none" viewBox="0 0 24 24" stroke="var(--orange)" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            </div>
+            <div class="stat-label">Avg. Overall Score</div>
+            <div class="stat-value" id="statAvgScore" style="color:var(--orange)">—</div>
+            <div class="stat-change neutral">Across all audited sites</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-bar">
+        <div class="filter-search">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input type="text" id="searchInput" placeholder="Search URL, email, or name…" oninput="applyFilters()"/>
+        </div>
+        <select class="filter-select" id="statusFilter" onchange="applyFilters()">
+          <option value="">All Statuses</option>
+          <option value="new">New</option>
+          <option value="contacted">Contacted</option>
+          <option value="quoted">Quoted</option>
+          <option value="converted">Converted</option>
+          <option value="lost">Lost</option>
+        </select>
+        <select class="filter-select" id="bizFilter" onchange="applyFilters()">
+          <option value="">All Industries</option>
+          <option>Real Estate / Property</option>
+          <option>Restaurant / Food & Beverage</option>
+          <option>Home Services / Contractor</option>
+          <option>Medical / Dental / Healthcare</option>
+          <option>Legal Services</option>
+          <option>Retail / E-commerce</option>
+          <option>Auto Services</option>
+          <option>Salon / Beauty / Spa</option>
+          <option>Other</option>
+        </select>
+        <select class="filter-select" id="scoreFilter" onchange="applyFilters()">
+          <option value="">Any Score</option>
+          <option value="bad">Poor (0–49)</option>
+          <option value="mid">Needs Work (50–79)</option>
+          <option value="good">Good (80–100)</option>
+        </select>
+        <div class="filter-count" id="filterCount">— leads</div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th onclick="sortBy('website_url')">Website <span id="sort-website_url"></span></th>
+                <th onclick="sortBy('overall_score')" class="sorted">Score <span id="sort-overall_score">↓</span></th>
+                <th onclick="sortBy('performance_score')">Perf <span id="sort-performance_score"></span></th>
+                <th onclick="sortBy('mobile_score')">Mobile <span id="sort-mobile_score"></span></th>
+                <th onclick="sortBy('seo_score')">SEO <span id="sort-seo_score"></span></th>
+                <th onclick="sortBy('conversion_score')">Conv. <span id="sort-conversion_score"></span></th>
+                <th onclick="sortBy('email')">Contact <span id="sort-email"></span></th>
+                <th onclick="sortBy('status')">Status <span id="sort-status"></span></th>
+                <th onclick="sortBy('created_at')">Date <span id="sort-created_at"></span></th>
+              </tr>
+            </thead>
+            <tbody id="leadsTable">
+              <tr><td colspan="9" class="table-loading"><div class="big-spinner"></div><div>Loading leads…</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- Detail Overlay -->
+<div class="detail-overlay" id="detailOverlay" onclick="closeDetail()"></div>
+
+<!-- Detail Panel -->
+<div class="detail-panel" id="detailPanel">
+  <div class="detail-header">
+    <div>
+      <div class="detail-title" id="detailUrl">—</div>
+      <div class="detail-sub" id="detailDate">—</div>
+    </div>
+    <button class="detail-close" onclick="closeDetail()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="detail-body" id="detailBody"></div>
+  <div class="detail-footer">
+    <button class="detail-action-btn btn-danger" onclick="deleteLead()">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      Delete Lead
+    </button>
+    <a id="auditAgainBtn" href="#" target="_blank" class="detail-action-btn btn-success" style="color:#fff">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+      Re-Audit Site
+    </a>
+  </div>
+</div>
+
+<div id="toast">
+  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+  <span id="toastMsg">Saved!</span>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────
+//  CONFIG — Change PIN here
+// ─────────────────────────────────────────────────────────
+const ACCESS_PIN = '1234';
+
+const SUPA_URL = 'https://wwprevympfnprxyubpfw.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3cHJldnltcGZucHJ4eXVicGZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzOTg0MzYsImV4cCI6MjA4OTk3NDQzNn0.fca6cmyuCDdAbSao20ivi906SzFvx_pHrDtTO336m2w';
+const db = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ─────────────────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────────────────
+let allLeads       = [];
+let filteredLeads  = [];
+let selectedLead   = null;
+let sortCol        = 'created_at';
+let sortDir        = 'desc';
+
+// ─────────────────────────────────────────────────────────
+//  AUTH
+// ─────────────────────────────────────────────────────────
+function checkPin() {
+  const pin = document.getElementById('pinInput').value;
+  if (pin === ACCESS_PIN) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    loadLeads();
+  } else {
+    document.getElementById('pinError').style.display = 'block';
+    document.getElementById('pinInput').value = '';
+    document.getElementById('pinInput').focus();
+  }
+}
+function logout() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('pinInput').value = '';
+}
+document.getElementById('pinInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkPin();
+});
+
+// ─────────────────────────────────────────────────────────
+//  DATA LOADING
+// ─────────────────────────────────────────────────────────
+async function loadLeads() {
+  document.getElementById('leadsTable').innerHTML =
+    '<tr><td colspan="9" class="table-loading"><div class="big-spinner"></div><div>Loading…</div></td></tr>';
+
+  const { data, error } = await db
+    .from('audit_leads')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    showToast('Error loading leads: ' + error.message, true);
+    document.getElementById('leadsTable').innerHTML =
+      `<tr><td colspan="9" class="table-loading" style="color:var(--red)">Failed to load leads. Check your Supabase connection.</td></tr>`;
+    return;
+  }
+
+  allLeads = data || [];
+  updateStats();
+  applyFilters();
+
+  const now = new Date();
+  document.getElementById('lastRefresh').textContent =
+    `Last updated: ${now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
+}
+
+// ─────────────────────────────────────────────────────────
+//  STATS
+// ─────────────────────────────────────────────────────────
+function updateStats() {
+  const total     = allLeads.length;
+  const newLeads  = allLeads.filter(l => l.status === 'new').length;
+  const converted = allLeads.filter(l => l.status === 'converted').length;
+  const withScore = allLeads.filter(l => l.overall_score !== null && l.overall_score !== undefined);
+  const avgScore  = withScore.length ? Math.round(withScore.reduce((s,l) => s + l.overall_score, 0) / withScore.length) : null;
+  const convRate  = total > 0 ? Math.round((converted / total) * 100) : 0;
+
+  document.getElementById('statTotal').textContent     = total;
+  document.getElementById('statNew').textContent       = newLeads;
+  document.getElementById('statConverted').textContent = converted;
+  document.getElementById('statAvgScore').textContent  = avgScore ?? '—';
+  document.getElementById('statConvRate').textContent  = convRate + '% close rate';
+  document.getElementById('newBadge').textContent      = newLeads;
+  document.getElementById('statTotalSub').textContent  = `${total} site${total !== 1 ? 's' : ''} audited`;
+}
+
+// ─────────────────────────────────────────────────────────
+//  FILTERS + SORT
+// ─────────────────────────────────────────────────────────
+function applyFilters() {
+  const search  = document.getElementById('searchInput').value.toLowerCase();
+  const status  = document.getElementById('statusFilter').value;
+  const biz     = document.getElementById('bizFilter').value;
+  const scoreF  = document.getElementById('scoreFilter').value;
+
+  filteredLeads = allLeads.filter(l => {
+    if (search) {
+      const haystack = [l.website_url, l.email, l.first_name, l.last_name, l.business_type].filter(Boolean).join(' ').toLowerCase();
+      if (!haystack.includes(search)) return false;
+    }
+    if (status && l.status !== status) return false;
+    if (biz && l.business_type !== biz) return false;
+    if (scoreF) {
+      const s = l.overall_score;
+      if (scoreF === 'bad' && !(s !== null && s < 50)) return false;
+      if (scoreF === 'mid' && !(s !== null && s >= 50 && s < 80)) return false;
+      if (scoreF === 'good' && !(s !== null && s >= 80)) return false;
+    }
+    return true;
+  });
+
+  // Sort
+  filteredLeads.sort((a, b) => {
+    let av = a[sortCol], bv = b[sortCol];
+    if (av === null || av === undefined) av = sortDir === 'asc' ? Infinity : -Infinity;
+    if (bv === null || bv === undefined) bv = sortDir === 'asc' ? Infinity : -Infinity;
+    if (typeof av === 'string') av = av.toLowerCase();
+    if (typeof bv === 'string') bv = bv.toLowerCase();
+    const cmp = av < bv ? -1 : av > bv ? 1 : 0;
+    return sortDir === 'asc' ? cmp : -cmp;
+  });
+
+  document.getElementById('filterCount').textContent = `${filteredLeads.length} lead${filteredLeads.length !== 1 ? 's' : ''}`;
+  renderTable();
+}
+
+function sortBy(col) {
+  if (sortCol === col) { sortDir = sortDir === 'asc' ? 'desc' : 'asc'; }
+  else { sortCol = col; sortDir = 'desc'; }
+  // Update header indicators
+  document.querySelectorAll('th').forEach(th => th.classList.remove('sorted'));
+  document.querySelectorAll('[id^="sort-"]').forEach(el => el.textContent = '');
+  const indicator = document.getElementById('sort-' + col);
+  if (indicator) {
+    indicator.closest('th').classList.add('sorted');
+    indicator.textContent = sortDir === 'asc' ? '↑' : '↓';
+  }
+  applyFilters();
+}
+
+function filterByStatus(status) {
+  document.getElementById('statusFilter').value = status;
+  document.getElementById('searchInput').value = '';
+  const titles = { new:'New Leads', contacted:'Contacted', quoted:'Quoted', converted:'Converted', lost:'Lost' };
+  document.getElementById('topbarTitle').textContent = titles[status] || 'All Leads';
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  event.target.closest('.nav-item').classList.add('active');
+  applyFilters();
+}
+
+function showView(view) {
+  document.getElementById('statusFilter').value = '';
+  document.getElementById('topbarTitle').textContent = 'All Leads';
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  event.target.closest('.nav-item').classList.add('active');
+  applyFilters();
+}
+
+// ─────────────────────────────────────────────────────────
+//  TABLE RENDER
+// ─────────────────────────────────────────────────────────
+function renderTable() {
+  const tbody = document.getElementById('leadsTable');
+  if (filteredLeads.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9">
+      <div class="empty-state">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <h3>No leads found</h3>
+        <p>Try adjusting your filters or run a new audit to capture leads.</p>
+      </div>
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filteredLeads.map(l => {
+    const domain = (() => { try { return new URL(l.website_url).hostname.replace('www.',''); } catch { return l.website_url; } })();
+    const contactName = [l.first_name, l.last_name].filter(Boolean).join(' ') || '—';
+    const contactEmail = l.email || '—';
+    const date = l.created_at ? new Date(l.created_at).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'}) : '—';
+    const isSelected = selectedLead?.id === l.id;
+    return `
+      <tr onclick="openDetail('${l.id}')" ${isSelected ? 'class="selected"' : ''}>
+        <td>
+          <div class="td-url">${domain}</div>
+          <small>${l.website_url.length > 40 ? l.website_url.substring(0,40) + '…' : l.website_url}</small>
+        </td>
+        <td>${scorePill(l.overall_score)}</td>
+        <td>${scorePill(l.performance_score)}</td>
+        <td>${scorePill(l.mobile_score)}</td>
+        <td>${scorePill(l.seo_score)}</td>
+        <td>${scorePill(l.conversion_score)}</td>
+        <td>
+          <div style="font-size:13px;font-weight:600;color:var(--dark)">${contactName}</div>
+          <div style="font-size:12px;color:var(--gray-500)">${contactEmail}</div>
+        </td>
+        <td>${statusBadge(l.status)}</td>
+        <td class="td-date">${date}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function scorePill(s) {
+  if (s === null || s === undefined) return `<span class="score-pill score-null">—</span>`;
+  const cls = s >= 80 ? 'score-good' : s >= 50 ? 'score-mid' : 'score-bad';
+  return `<span class="score-pill ${cls}">${s}</span>`;
+}
+
+function statusBadge(status) {
+  const labels = { new:'New', contacted:'Contacted', quoted:'Quoted', converted:'Converted', lost:'Lost' };
+  const label = labels[status] || status || 'Unknown';
+  return `<span class="status-badge status-${status || 'new'}"><span class="status-dot"></span>${label}</span>`;
+}
+
+// ─────────────────────────────────────────────────────────
+//  DETAIL PANEL
+// ─────────────────────────────────────────────────────────
+function openDetail(id) {
+  const lead = allLeads.find(l => l.id === id);
+  if (!lead) return;
+  selectedLead = lead;
+
+  // Highlight row
+  document.querySelectorAll('tbody tr').forEach(r => r.classList.remove('selected'));
+  event?.currentTarget?.classList.add('selected');
+
+  // Header
+  const domain = (() => { try { return new URL(lead.website_url).hostname.replace('www.',''); } catch { return lead.website_url; } })();
+  document.getElementById('detailUrl').textContent = domain;
+  const date = lead.created_at ? new Date(lead.created_at).toLocaleString('en-US', {month:'long',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}) : 'Unknown date';
+  document.getElementById('detailDate').textContent = 'Submitted ' + date;
+  document.getElementById('auditAgainBtn').href = `audit.html?url=${encodeURIComponent(lead.website_url)}`;
+
+  // Body
+  const issues = lead.issues || [];
+  const topIssues = issues.slice(0, 6);
+  const convData = lead.conversion_data || {};
+  const seoData  = lead.seo_data || {};
+
+  document.getElementById('detailBody').innerHTML = `
+    <!-- Scores -->
+    <div class="detail-section">
+      <div class="detail-section-title">Audit Scores</div>
+      <div class="detail-scores">
+        <div class="dscore-card">
+          <div class="dscore-num ${scoreClass(lead.overall_score)}">${lead.overall_score ?? '—'}</div>
+          <div class="dscore-lbl">Overall</div>
+        </div>
+        <div class="dscore-card">
+          <div class="dscore-num ${scoreClass(lead.performance_score)}">${lead.performance_score ?? '—'}</div>
+          <div class="dscore-lbl">Performance</div>
+        </div>
+        <div class="dscore-card">
+          <div class="dscore-num ${scoreClass(lead.mobile_score)}">${lead.mobile_score ?? '—'}</div>
+          <div class="dscore-lbl">Mobile</div>
+        </div>
+        <div class="dscore-card">
+          <div class="dscore-num ${scoreClass(lead.seo_score)}">${lead.seo_score ?? '—'}</div>
+          <div class="dscore-lbl">SEO</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact Info -->
+    <div class="detail-section">
+      <div class="detail-section-title">Contact Info</div>
+      <div class="detail-field"><label>Name</label><div class="detail-field-val">${[lead.first_name,lead.last_name].filter(Boolean).join(' ') || 'Not provided'}</div></div>
+      <div class="detail-field"><label>Email</label><div class="detail-field-val">${lead.email ? `<a href="mailto:${lead.email}">${lead.email}</a>` : 'Not provided'}</div></div>
+      <div class="detail-field"><label>Phone</label><div class="detail-field-val">${lead.phone || 'Not provided'}</div></div>
+      <div class="detail-field"><label>Industry</label><div class="detail-field-val">${lead.business_type || 'Not provided'}</div></div>
+      <div class="detail-field"><label>Website</label><div class="detail-field-val"><a href="${lead.website_url}" target="_blank">${lead.website_url}</a></div></div>
+    </div>
+
+    <!-- Key Signals -->
+    <div class="detail-section">
+      <div class="detail-section-title">Site Signals</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+        ${signal('SSL (HTTPS)', convData.isSSL)}
+        ${signal('Phone Number', convData.hasPhone)}
+        ${signal('Contact Form', convData.hasForm)}
+        ${signal('Clear CTA', convData.hasCTA)}
+        ${signal('Reviews Found', convData.hasReviews)}
+        ${signal('Meta Description', !!seoData.metaDesc)}
+        ${signal('H1 Heading', !!seoData.h1)}
+        ${signal('Mobile Viewport', seoData.viewport)}
+      </div>
+    </div>
+
+    <!-- Top Issues -->
+    ${topIssues.length > 0 ? `
+    <div class="detail-section">
+      <div class="detail-section-title">Top Issues (${issues.length} total)</div>
+      ${topIssues.map(i => `
+        <div class="issue-mini">
+          <div class="issue-mini-dot" style="background:${i.sev==='critical'?'var(--red)':i.sev==='high'?'var(--orange)':i.sev==='medium'?'var(--blue)':'var(--green)'}"></div>
+          <div class="issue-mini-text">${i.title}</div>
+          <div class="issue-mini-badge" style="background:${i.sev==='critical'?'rgba(239,68,68,.1)':i.sev==='high'?'rgba(245,158,11,.1)':i.sev==='medium'?'rgba(37,99,235,.1)':'rgba(16,185,129,.1)'};color:${i.sev==='critical'?'var(--red)':i.sev==='high'?'var(--orange)':i.sev==='medium'?'var(--blue)':'var(--green)'}">${i.sev}</div>
+        </div>
+      `).join('')}
+    </div>
+    ` : ''}
+
+    <!-- Status -->
+    <div class="detail-section">
+      <div class="detail-section-title">CRM Status</div>
+      <select class="status-select" id="detailStatus" onchange="updateStatus()" data-id="${lead.id}">
+        <option value="new"       ${lead.status==='new'       ?'selected':''}>🔵 New</option>
+        <option value="contacted" ${lead.status==='contacted' ?'selected':''}>🟡 Contacted</option>
+        <option value="quoted"    ${lead.status==='quoted'    ?'selected':''}>🟣 Quoted</option>
+        <option value="converted" ${lead.status==='converted' ?'selected':''}>🟢 Converted</option>
+        <option value="lost"      ${lead.status==='lost'      ?'selected':''}>🔴 Lost</option>
+      </select>
+    </div>
+
+    <!-- Notes -->
+    <div class="detail-section">
+      <div class="detail-section-title">Notes</div>
+      <textarea class="notes-input" id="detailNotes" placeholder="Add notes about this lead…">${lead.notes || ''}</textarea>
+      <button class="save-notes-btn" onclick="saveNotes('${lead.id}')" style="margin-top:8px">Save Notes</button>
+    </div>
+
+    <!-- Metrics -->
+    ${lead.lcp_ms || lead.tbt_ms ? `
+    <div class="detail-section">
+      <div class="detail-section-title">Performance Metrics</div>
+      ${lead.lcp_ms ? `<div class="detail-field"><label>LCP</label><div class="detail-field-val">${(lead.lcp_ms/1000).toFixed(1)}s</div></div>` : ''}
+      ${lead.tbt_ms !== null && lead.tbt_ms !== undefined ? `<div class="detail-field"><label>Total Blocking Time</label><div class="detail-field-val">${lead.tbt_ms}ms</div></div>` : ''}
+      ${lead.cls_value !== null && lead.cls_value !== undefined ? `<div class="detail-field"><label>Layout Shift (CLS)</label><div class="detail-field-val">${parseFloat(lead.cls_value).toFixed(3)}</div></div>` : ''}
+    </div>
+    ` : ''}
+  `;
+
+  document.getElementById('detailOverlay').classList.add('open');
+  document.getElementById('detailPanel').classList.add('open');
+}
+
+function signal(label, value) {
+  const icon = value
+    ? `<svg fill="none" viewBox="0 0 24 24" stroke="var(--green)" stroke-width="2.5" style="width:14px;height:14px;flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`
+    : `<svg fill="none" viewBox="0 0 24 24" stroke="var(--red)" stroke-width="2.5" style="width:14px;height:14px;flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>`;
+  return `<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--gray-50);border-radius:6px;border:1px solid var(--gray-200)">${icon}<span style="color:var(--dark-700)">${label}</span></div>`;
+}
+
+function scoreClass(s) {
+  if (s === null || s === undefined) return '';
+  return s >= 80 ? 'score-good' : s >= 50 ? 'score-mid' : 'score-bad';
+}
+
+function closeDetail() {
+  document.getElementById('detailOverlay').classList.remove('open');
+  document.getElementById('detailPanel').classList.remove('open');
+  document.querySelectorAll('tbody tr').forEach(r => r.classList.remove('selected'));
+  selectedLead = null;
+}
+
+// ─────────────────────────────────────────────────────────
+//  SUPABASE UPDATES
+// ─────────────────────────────────────────────────────────
+async function updateStatus() {
+  const select = document.getElementById('detailStatus');
+  const id     = select.dataset.id;
+  const status = select.value;
+
+  const { error } = await db.from('audit_leads').update({ status }).eq('id', id);
+  if (error) { showToast('Error saving status', true); return; }
+
+  // Update local state
+  const lead = allLeads.find(l => l.id === id);
+  if (lead) lead.status = status;
+  selectedLead = lead;
+  updateStats();
+  renderTable();
+  showToast('Status updated to ' + status);
+}
+
+async function saveNotes(id) {
+  const notes = document.getElementById('detailNotes').value;
+  const { error } = await db.from('audit_leads').update({ notes }).eq('id', id);
+  if (error) { showToast('Error saving notes', true); return; }
+  const lead = allLeads.find(l => l.id === id);
+  if (lead) lead.notes = notes;
+  showToast('Notes saved ✓');
+}
+
+async function deleteLead() {
+  if (!selectedLead) return;
+  if (!confirm(`Delete audit for ${selectedLead.website_url}? This cannot be undone.`)) return;
+  const { error } = await db.from('audit_leads').delete().eq('id', selectedLead.id);
+  if (error) { showToast('Error deleting lead', true); return; }
+  allLeads = allLeads.filter(l => l.id !== selectedLead.id);
+  closeDetail();
+  updateStats();
+  applyFilters();
+  showToast('Lead deleted');
+}
+
+// ─────────────────────────────────────────────────────────
+//  EXPORT CSV
+// ─────────────────────────────────────────────────────────
+function exportCSV() {
+  const cols = ['website_url','email','first_name','last_name','phone','business_type','status','overall_score','performance_score','mobile_score','seo_score','conversion_score','lcp_ms','tbt_ms','notes','created_at'];
+  const header = cols.join(',');
+  const rows = filteredLeads.map(l => cols.map(c => {
+    const v = l[c] ?? '';
+    return typeof v === 'string' && (v.includes(',') || v.includes('"') || v.includes('\n')) ? `"${v.replace(/"/g,'""')}"` : v;
+  }).join(','));
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `siterevive-leads-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  showToast(`Exported ${filteredLeads.length} leads`);
+}
+
+// ─────────────────────────────────────────────────────────
+//  TOAST
+// ─────────────────────────────────────────────────────────
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.style.borderLeftColor = isError ? 'var(--red)' : 'var(--green)';
+  t.querySelector('svg').style.color = isError ? 'var(--red)' : 'var(--green)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ─────────────────────────────────────────────────────────
+//  URL PARAMS — pre-fill search
+// ─────────────────────────────────────────────────────────
+const params = new URLSearchParams(location.search);
+if (params.get('status')) {
+  document.getElementById('statusFilter').value = params.get('status');
+}
+</script>
+</body>
+</html>

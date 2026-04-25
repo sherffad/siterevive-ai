@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Free Website Audit — SiteRevive AI</title>
+  <meta name="description" content="Get a free AI-powered audit of your website in seconds. See performance, SEO, mobile, and conversion scores instantly."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:#0F172A;color:#0F172A;line-height:1.6;min-height:100vh}
+    :root{
+      --blue:#2563EB;--blue-dark:#1D4ED8;--blue-light:#3B82F6;--blue-50:#EFF6FF;
+      --green:#10B981;--orange:#F59E0B;--red:#EF4444;
+      --dark:#0F172A;--dark-800:#1E293B;--dark-700:#334155;
+      --gray-500:#64748B;--gray-200:#E2E8F0;--gray-100:#F1F5F9;--white:#FFFFFF;
+      --radius:12px;--radius-lg:20px;
+      --shadow:0 4px 24px rgba(0,0,0,.08);--shadow-lg:0 16px 48px rgba(0,0,0,.14);
+    }
+    a{text-decoration:none;color:inherit}
+    img{max-width:100%;display:block}
+
+    /* ── NAV ── */
+    nav{
+      position:fixed;top:0;left:0;right:0;z-index:100;
+      background:rgba(15,23,42,.92);backdrop-filter:blur(12px);
+      border-bottom:1px solid rgba(255,255,255,.08);padding:14px 0;
+    }
+    .nav-inner{max-width:1200px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between}
+    .nav-logo{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:800;color:#fff}
+    .nav-logo-icon{width:34px;height:34px;background:var(--blue);border-radius:9px;display:flex;align-items:center;justify-content:center}
+    .nav-logo-icon svg{width:18px;height:18px;color:#fff}
+    .nav-back{font-size:14px;font-weight:600;color:#64748B;display:flex;align-items:center;gap:6px;transition:color .2s}
+    .nav-back:hover{color:#fff}
+    .nav-back svg{width:16px;height:16px}
+
+    /* ── MAIN WRAPPER ── */
+    .page{padding-top:72px;min-height:100vh}
+
+    /* ══════════════════════════════════
+       STATE 1 — INPUT
+    ══════════════════════════════════ */
+    #state-input{
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      min-height:calc(100vh - 72px);padding:60px 24px;text-align:center;
+    }
+    .input-badge{
+      display:inline-flex;align-items:center;gap:8px;
+      background:rgba(37,99,235,.2);border:1px solid rgba(37,99,235,.4);
+      color:#93C5FD;font-size:13px;font-weight:600;padding:6px 16px;
+      border-radius:100px;margin-bottom:24px;
+    }
+    .input-badge-dot{width:8px;height:8px;background:#60A5FA;border-radius:50%;animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.3)}}
+    .input-title{font-size:clamp(32px,5vw,58px);font-weight:900;color:#fff;letter-spacing:-1.5px;line-height:1.1;margin-bottom:16px}
+    .input-title span{color:#60A5FA}
+    .input-sub{font-size:18px;color:#94A3B8;max-width:520px;margin:0 auto 40px}
+    .url-form{width:100%;max-width:640px;position:relative}
+    .url-input-wrap{display:flex;background:#1E293B;border:2px solid rgba(255,255,255,.12);border-radius:var(--radius-lg);overflow:hidden;transition:border-color .2s,box-shadow .2s}
+    .url-input-wrap:focus-within{border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.2)}
+    .url-input-icon{padding:0 18px;display:flex;align-items:center;color:#64748B;flex-shrink:0}
+    .url-input-icon svg{width:22px;height:22px}
+    #urlInput{
+      flex:1;background:transparent;border:none;outline:none;
+      font-size:17px;font-family:inherit;color:#fff;padding:18px 0;
+    }
+    #urlInput::placeholder{color:#475569}
+    .url-submit{
+      background:var(--blue);color:#fff;border:none;cursor:pointer;
+      padding:0 28px;font-size:16px;font-weight:700;font-family:inherit;
+      display:flex;align-items:center;gap:8px;white-space:nowrap;
+      transition:background .2s;flex-shrink:0;
+    }
+    .url-submit:hover{background:var(--blue-dark)}
+    .url-submit svg{width:18px;height:18px}
+    .url-error{color:#F87171;font-size:14px;margin-top:10px;display:none}
+    .input-examples{margin-top:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center}
+    .example-label{font-size:13px;color:#475569}
+    .example-chip{
+      font-size:12px;color:#64748B;background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.1);border-radius:99px;
+      padding:5px 14px;cursor:pointer;transition:all .2s;
+    }
+    .example-chip:hover{color:#93C5FD;border-color:rgba(37,99,235,.4);background:rgba(37,99,235,.1)}
+    .input-features{display:flex;gap:32px;margin-top:48px;flex-wrap:wrap;justify-content:center}
+    .input-feat{display:flex;align-items:center;gap:8px;color:#64748B;font-size:14px}
+    .input-feat svg{width:18px;height:18px;color:var(--green)}
+
+    /* ══════════════════════════════════
+       STATE 2 — LOADING
+    ══════════════════════════════════ */
+    #state-loading{
+      display:none;flex-direction:column;align-items:center;justify-content:center;
+      min-height:calc(100vh - 72px);padding:60px 24px;text-align:center;
+    }
+    .loading-url{font-size:16px;color:#60A5FA;font-weight:600;margin-bottom:8px;word-break:break-all;max-width:500px}
+    .loading-title{font-size:32px;font-weight:800;color:#fff;margin-bottom:8px;letter-spacing:-.5px}
+    .loading-sub{font-size:16px;color:#64748B;margin-bottom:48px}
+    .loading-steps{display:flex;flex-direction:column;gap:16px;width:100%;max-width:420px}
+    .loading-step{
+      display:flex;align-items:center;gap:16px;
+      background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+      border-radius:var(--radius);padding:16px 20px;
+      transition:all .4s;
+    }
+    .loading-step.active{border-color:rgba(37,99,235,.5);background:rgba(37,99,235,.08)}
+    .loading-step.done{border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.06)}
+    .step-icon-wrap{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:rgba(255,255,255,.06)}
+    .loading-step.active .step-icon-wrap{background:rgba(37,99,235,.2)}
+    .loading-step.done .step-icon-wrap{background:rgba(16,185,129,.2)}
+    .step-icon-wrap svg{width:22px;height:22px;color:#64748B}
+    .loading-step.active .step-icon-wrap svg{color:#60A5FA}
+    .loading-step.done .step-icon-wrap svg{color:var(--green)}
+    .step-text{flex:1;text-align:left}
+    .step-title{font-size:15px;font-weight:700;color:#94A3B8}
+    .loading-step.active .step-title{color:#fff}
+    .loading-step.done .step-title{color:#34D399}
+    .step-desc{font-size:13px;color:#475569;margin-top:2px}
+    .step-status{flex-shrink:0}
+    .spinner{width:20px;height:20px;border:2px solid rgba(37,99,235,.3);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .check-icon{width:20px;height:20px;color:var(--green)}
+    .step-wait{width:20px;height:20px;border:2px solid rgba(255,255,255,.1);border-radius:50%}
+
+    /* ══════════════════════════════════
+       STATE 3 — RESULTS
+    ══════════════════════════════════ */
+    #state-results{display:none;background:#F1F5F9;min-height:calc(100vh - 72px)}
+
+    /* Results Header */
+    .results-header{background:var(--dark);padding:40px 0}
+    .results-header-inner{max-width:1100px;margin:0 auto;padding:0 24px}
+    .results-url-badge{
+      display:inline-flex;align-items:center;gap:8px;
+      background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+      color:#94A3B8;font-size:13px;padding:6px 14px;border-radius:99px;margin-bottom:20px;
+      word-break:break-all;
+    }
+    .results-url-badge svg{width:14px;height:14px;flex-shrink:0}
+    .results-header-title{font-size:clamp(24px,4vw,36px);font-weight:900;color:#fff;letter-spacing:-.5px;margin-bottom:6px}
+    .results-header-sub{font-size:15px;color:#64748B}
+
+    /* Overall Score */
+    .results-overview{
+      max-width:1100px;margin:0 auto;padding:0 24px;
+      display:grid;grid-template-columns:auto 1fr;gap:32px;align-items:center;margin-top:28px;
+    }
+    .overall-score-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
+    .score-ring-container{position:relative;width:140px;height:140px}
+    .score-ring-svg{width:140px;height:140px;transform:rotate(-90deg)}
+    .score-ring-bg{fill:none;stroke:rgba(255,255,255,.08);stroke-width:10}
+    .score-ring-fill{fill:none;stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1),stroke 1s}
+    .score-ring-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .score-ring-num{font-size:38px;font-weight:900;color:#fff;letter-spacing:-2px;line-height:1}
+    .score-ring-label{font-size:11px;color:#64748B;font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-top:2px}
+    .overall-grade{font-size:13px;font-weight:700;padding:4px 14px;border-radius:99px;margin-top:4px}
+
+    /* Category scores */
+    .category-scores{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+    .cat-card{
+      background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+      border-radius:var(--radius-lg);padding:20px;text-align:center;
+      transition:transform .2s;cursor:default;
+    }
+    .cat-card:hover{transform:translateY(-2px)}
+    .cat-icon{width:44px;height:44px;border-radius:10px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center}
+    .cat-icon svg{width:24px;height:24px}
+    .cat-score-num{font-size:32px;font-weight:900;line-height:1;letter-spacing:-1px}
+    .cat-label{font-size:12px;color:#64748B;font-weight:600;margin-top:4px;text-transform:uppercase;letter-spacing:.4px}
+    .cat-bar{height:5px;background:rgba(255,255,255,.08);border-radius:99px;margin-top:10px;overflow:hidden}
+    .cat-bar-fill{height:100%;border-radius:99px;transition:width 1s cubic-bezier(.4,0,.2,1) .3s}
+
+    /* Scores color classes */
+    .score-good{color:var(--green)}
+    .score-mid{color:var(--orange)}
+    .score-bad{color:var(--red)}
+    .bg-good{background:rgba(16,185,129,.15)}
+    .bg-mid{background:rgba(245,158,11,.15)}
+    .bg-bad{background:rgba(239,68,68,.15)}
+    .fill-good{background:var(--green)}
+    .fill-mid{background:var(--orange)}
+    .fill-bad{background:var(--red)}
+    .grade-good{background:rgba(16,185,129,.2);color:#34D399}
+    .grade-mid{background:rgba(245,158,11,.2);color:#FCD34D}
+    .grade-bad{background:rgba(239,68,68,.2);color:#F87171}
+
+    /* Results Body */
+    .results-body{max-width:1100px;margin:0 auto;padding:32px 24px 64px;display:grid;grid-template-columns:1fr 360px;gap:28px}
+
+    /* Issues Panel */
+    .issues-panel{}
+    .panel-card{background:#fff;border-radius:var(--radius-lg);border:1px solid var(--gray-200);overflow:hidden;margin-bottom:24px}
+    .panel-header{padding:20px 24px;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between}
+    .panel-title{font-size:17px;font-weight:800;color:var(--dark)}
+    .panel-count{font-size:13px;color:var(--gray-500)}
+    .issue-item{padding:16px 24px;border-bottom:1px solid var(--gray-100);display:flex;align-items:flex-start;gap:14px}
+    .issue-item:last-child{border-bottom:none}
+    .issue-sev-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:5px}
+    .sev-critical .issue-sev-dot{background:var(--red)}
+    .sev-high .issue-sev-dot{background:var(--orange)}
+    .sev-medium .issue-sev-dot{background:var(--blue)}
+    .sev-low .issue-sev-dot{background:var(--green)}
+    .issue-body{flex:1}
+    .issue-title{font-size:14px;font-weight:700;color:var(--dark);margin-bottom:3px}
+    .issue-desc{font-size:13px;color:var(--gray-500);line-height:1.5}
+    .issue-fix{font-size:12px;font-weight:600;color:var(--blue);margin-top:6px;display:flex;align-items:center;gap:4px}
+    .issue-fix::before{content:'→'}
+    .issue-badge{flex-shrink:0;font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;white-space:nowrap}
+    .badge-critical{background:rgba(239,68,68,.1);color:var(--red)}
+    .badge-high{background:rgba(245,158,11,.1);color:var(--orange)}
+    .badge-medium{background:rgba(37,99,235,.1);color:var(--blue)}
+    .badge-low{background:rgba(16,185,129,.1);color:var(--green)}
+
+    /* Metrics table */
+    .metric-row{padding:14px 24px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between}
+    .metric-row:last-child{border-bottom:none}
+    .metric-name{font-size:14px;color:var(--dark-700);font-weight:500}
+    .metric-value{font-size:14px;font-weight:700}
+    .metric-status{font-size:11px;padding:2px 10px;border-radius:99px;font-weight:700;margin-left:8px}
+
+    /* Right Sidebar */
+    .results-sidebar{}
+    .sidebar-card{background:#fff;border-radius:var(--radius-lg);border:1px solid var(--gray-200);overflow:hidden;margin-bottom:24px}
+    .sidebar-header{padding:18px 20px;border-bottom:1px solid var(--gray-200)}
+    .sidebar-title{font-size:15px;font-weight:800;color:var(--dark)}
+    .sidebar-body{padding:20px}
+
+    /* Lead Capture Card */
+    .lead-card{
+      background:linear-gradient(135deg,var(--dark) 0%,#1E3A5F 100%);
+      border-radius:var(--radius-lg);padding:28px;margin-bottom:24px;
+      border:1px solid rgba(37,99,235,.3);
+    }
+    .lead-card-title{font-size:18px;font-weight:800;color:#fff;margin-bottom:8px}
+    .lead-card-sub{font-size:14px;color:#94A3B8;margin-bottom:20px;line-height:1.5}
+    .lead-form-group{margin-bottom:14px}
+    .lead-form-group label{display:block;font-size:12px;font-weight:700;color:#94A3B8;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
+    .lead-form-group input,.lead-form-group select{
+      width:100%;padding:11px 14px;font-size:14px;font-family:inherit;
+      background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
+      border-radius:var(--radius);outline:none;color:#fff;
+      transition:border-color .2s,box-shadow .2s;
+    }
+    .lead-form-group input::placeholder{color:#475569}
+    .lead-form-group input:focus,.lead-form-group select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.2)}
+    .lead-form-group select option{background:#1E293B;color:#fff}
+    .lead-submit{
+      width:100%;background:var(--blue);color:#fff;border:none;cursor:pointer;
+      padding:14px;font-size:15px;font-weight:700;font-family:inherit;
+      border-radius:var(--radius);display:flex;align-items:center;justify-content:center;gap:8px;
+      transition:background .2s,transform .1s;margin-top:4px;
+    }
+    .lead-submit:hover{background:var(--blue-dark);transform:translateY(-1px)}
+    .lead-submit svg{width:18px;height:18px}
+    .lead-privacy{font-size:12px;color:#475569;text-align:center;margin-top:10px}
+    .lead-submitted{display:none;text-align:center;padding:16px 0}
+    .lead-submitted-icon{width:52px;height:52px;background:rgba(16,185,129,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+    .lead-submitted-icon svg{width:28px;height:28px;color:var(--green)}
+    .lead-submitted-title{font-size:16px;font-weight:800;color:#fff;margin-bottom:6px}
+    .lead-submitted-sub{font-size:13px;color:#64748B}
+
+    /* Quick wins */
+    .win-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--gray-100)}
+    .win-item:last-child{border-bottom:none}
+    .win-num{width:28px;height:28px;background:var(--blue);border-radius:50%;color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+    .win-title{font-size:14px;font-weight:700;color:var(--dark);margin-bottom:3px}
+    .win-impact{font-size:12px;color:var(--green);font-weight:600}
+
+    /* Positive checks */
+    .check-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--gray-100);font-size:14px;color:var(--dark-700)}
+    .check-item:last-child{border-bottom:none}
+    .check-item svg{width:18px;height:18px;flex-shrink:0}
+    .check-pass svg{color:var(--green)}
+    .check-fail svg{color:var(--red)}
+
+    /* Bottom CTA Bar */
+    .results-cta-bar{
+      background:linear-gradient(135deg,var(--blue) 0%,#1D4ED8 100%);
+      padding:40px 0;text-align:center;
+    }
+    .results-cta-bar h3{font-size:26px;font-weight:900;color:#fff;letter-spacing:-.5px;margin-bottom:8px}
+    .results-cta-bar p{font-size:16px;color:rgba(255,255,255,.75);margin-bottom:24px}
+    .cta-btn{
+      display:inline-flex;align-items:center;gap:8px;
+      background:#fff;color:var(--blue);font-size:16px;font-weight:800;
+      padding:15px 32px;border-radius:var(--radius);transition:all .2s;border:none;cursor:pointer;
+    }
+    .cta-btn:hover{background:var(--blue-50);transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+    .cta-btn svg{width:20px;height:20px}
+
+    /* Toast */
+    #toast{
+      position:fixed;bottom:28px;right:28px;z-index:999;
+      background:var(--dark-800);color:#fff;font-size:14px;font-weight:600;
+      padding:14px 22px;border-radius:var(--radius);border-left:4px solid var(--green);
+      box-shadow:var(--shadow-lg);transform:translateY(80px);opacity:0;
+      transition:all .4s cubic-bezier(.175,.885,.32,1.275);display:flex;align-items:center;gap:8px;
+    }
+    #toast.show{transform:translateY(0);opacity:1}
+    #toast svg{width:18px;height:18px;color:var(--green)}
+
+    /* Responsive */
+    @media(max-width:900px){
+      .category-scores{grid-template-columns:repeat(2,1fr)}
+      .results-overview{grid-template-columns:1fr}
+      .overall-score-wrap{margin:0 auto}
+      .results-body{grid-template-columns:1fr}
+    }
+    @media(max-width:600px){
+      .category-scores{grid-template-columns:repeat(2,1fr)}
+      .url-submit span{display:none}
+      .url-submit{padding:0 18px}
+      .results-header{padding:24px 0}
+      .results-header-title{font-size:22px}
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <div class="nav-logo-icon">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </div>
+      SiteRevive<span style="color:#60A5FA">AI</span>
+    </a>
+    <a href="index.html" class="nav-back">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+      Back to home
+    </a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- ══ STATE 1: INPUT ══ -->
+  <div id="state-input">
+    <div class="input-badge">
+      <div class="input-badge-dot"></div>
+      AI Website Audit — 100% Free
+    </div>
+    <h1 class="input-title">See What's Wrong With<br/><span>Your Website</span> Right Now</h1>
+    <p class="input-sub">Enter your URL and get a full performance, mobile, SEO, and conversion audit in under 30 seconds.</p>
+
+    <form class="url-form" onsubmit="startAudit(event)">
+      <div class="url-input-wrap">
+        <div class="url-input-icon">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg>
+        </div>
+        <input type="text" id="urlInput" placeholder="https://yourbusiness.com" autocomplete="off" spellcheck="false"/>
+        <button type="submit" class="url-submit">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <span>Analyze My Website</span>
+        </button>
+      </div>
+      <div class="url-error" id="urlError">Please enter a valid website URL (e.g. https://example.com)</div>
+    </form>
+
+    <div class="input-examples">
+      <span class="example-label">Try an example:</span>
+      <span class="example-chip" onclick="fillExample('https://example.com')">example.com</span>
+      <span class="example-chip" onclick="fillExample('https://web.dev')">web.dev</span>
+      <span class="example-chip" onclick="fillExample('https://wordpress.com')">wordpress.com</span>
+    </div>
+
+    <div class="input-features">
+      <div class="input-feat">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        Performance & Speed
+      </div>
+      <div class="input-feat">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        Mobile Experience
+      </div>
+      <div class="input-feat">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        SEO Health
+      </div>
+      <div class="input-feat">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        Conversion Signals
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STATE 2: LOADING ══ -->
+  <div id="state-loading">
+    <div class="loading-url" id="loadingUrl"></div>
+    <h2 class="loading-title">Analyzing your website…</h2>
+    <p class="loading-sub">Our AI is running 50+ checks. This takes about 20 seconds.</p>
+    <div class="loading-steps">
+      <div class="loading-step" id="step-perf">
+        <div class="step-icon-wrap">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <div class="step-text">
+          <div class="step-title">Performance & Speed</div>
+          <div class="step-desc">Checking load time, Core Web Vitals, asset sizes…</div>
+        </div>
+        <div class="step-status"><div class="step-wait"></div></div>
+      </div>
+      <div class="loading-step" id="step-mobile">
+        <div class="step-icon-wrap">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+        </div>
+        <div class="step-text">
+          <div class="step-title">Mobile Experience</div>
+          <div class="step-desc">Testing responsive layout, touch targets, viewport…</div>
+        </div>
+        <div class="step-status"><div class="step-wait"></div></div>
+      </div>
+      <div class="loading-step" id="step-seo">
+        <div class="step-icon-wrap">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+        <div class="step-text">
+          <div class="step-title">SEO Health</div>
+          <div class="step-desc">Scanning titles, meta tags, headings, image alt text…</div>
+        </div>
+        <div class="step-status"><div class="step-wait"></div></div>
+      </div>
+      <div class="loading-step" id="step-conv">
+        <div class="step-icon-wrap">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        </div>
+        <div class="step-text">
+          <div class="step-title">Conversion Signals</div>
+          <div class="step-desc">Looking for CTAs, phone number, trust signals, SSL…</div>
+        </div>
+        <div class="step-status"><div class="step-wait"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STATE 3: RESULTS ══ -->
+  <div id="state-results">
+
+    <!-- Header + Scores -->
+    <div class="results-header">
+      <div class="results-header-inner">
+        <div class="results-url-badge">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg>
+          <span id="resultUrl"></span>
+        </div>
+        <div class="results-header-title">Your Website Audit Report</div>
+        <div class="results-header-sub" id="resultSubline"></div>
+
+        <div class="results-overview">
+          <div class="overall-score-wrap">
+            <div class="score-ring-container">
+              <svg class="score-ring-svg" viewBox="0 0 140 140">
+                <circle class="score-ring-bg" cx="70" cy="70" r="60"/>
+                <circle class="score-ring-fill" id="overallRingFill" cx="70" cy="70" r="60"
+                  stroke-dasharray="377" stroke-dashoffset="377"/>
+              </svg>
+              <div class="score-ring-text">
+                <div class="score-ring-num" id="overallScoreNum">—</div>
+                <div class="score-ring-label">Overall</div>
+              </div>
+            </div>
+            <div class="overall-grade" id="overallGrade">Analyzing…</div>
+          </div>
+
+          <div class="category-scores">
+            <!-- Performance -->
+            <div class="cat-card">
+              <div class="cat-icon" id="catIconPerf">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              </div>
+              <div class="cat-score-num" id="catScorePerf">—</div>
+              <div class="cat-label">Performance</div>
+              <div class="cat-bar"><div class="cat-bar-fill" id="catBarPerf" style="width:0%"></div></div>
+            </div>
+            <!-- Mobile -->
+            <div class="cat-card">
+              <div class="cat-icon" id="catIconMobile">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+              </div>
+              <div class="cat-score-num" id="catScoreMobile">—</div>
+              <div class="cat-label">Mobile</div>
+              <div class="cat-bar"><div class="cat-bar-fill" id="catBarMobile" style="width:0%"></div></div>
+            </div>
+            <!-- SEO -->
+            <div class="cat-card">
+              <div class="cat-icon" id="catIconSeo">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              </div>
+              <div class="cat-score-num" id="catScoreSeo">—</div>
+              <div class="cat-label">SEO</div>
+              <div class="cat-bar"><div class="cat-bar-fill" id="catBarSeo" style="width:0%"></div></div>
+            </div>
+            <!-- Conversion -->
+            <div class="cat-card">
+              <div class="cat-icon" id="catIconConv">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+              </div>
+              <div class="cat-score-num" id="catScoreConv">—</div>
+              <div class="cat-label">Conversion</div>
+              <div class="cat-bar"><div class="cat-bar-fill" id="catBarConv" style="width:0%"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Body: Issues + Sidebar -->
+    <div class="results-body">
+
+      <!-- LEFT: Issues -->
+      <div class="issues-panel">
+
+        <!-- Issues Found -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title">Issues Found</div>
+            <div class="panel-count" id="issueCount">0 issues</div>
+          </div>
+          <div id="issuesList"></div>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title">Performance Metrics</div>
+            <div class="panel-count">Core Web Vitals</div>
+          </div>
+          <div id="metricsList"></div>
+        </div>
+
+        <!-- What's Working -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title">What's Working ✓</div>
+            <div class="panel-count" id="passCount">Checks passed</div>
+          </div>
+          <div id="passesList" style="padding:4px 0"></div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: Sidebar -->
+      <div class="results-sidebar">
+
+        <!-- Lead Capture -->
+        <div class="lead-card">
+          <div class="lead-card-title">Get Your Free Redesign Preview</div>
+          <div class="lead-card-sub">We'll build a modern version of your site and send it to you — completely free. No commitment required.</div>
+          <div id="leadFormWrap">
+            <form onsubmit="submitLead(event)">
+              <div class="lead-form-group">
+                <label>Your Name</label>
+                <input type="text" id="leadName" placeholder="John Smith" required/>
+              </div>
+              <div class="lead-form-group">
+                <label>Email Address</label>
+                <input type="email" id="leadEmail" placeholder="john@yourbusiness.com" required/>
+              </div>
+              <div class="lead-form-group">
+                <label>Business Type</label>
+                <select id="leadBizType">
+                  <option value="">Select industry…</option>
+                  <option>Real Estate / Property</option>
+                  <option>Restaurant / Food & Beverage</option>
+                  <option>Home Services / Contractor</option>
+                  <option>Medical / Dental / Healthcare</option>
+                  <option>Legal Services</option>
+                  <option>Retail / E-commerce</option>
+                  <option>Auto Services</option>
+                  <option>Salon / Beauty / Spa</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <button type="submit" class="lead-submit" id="leadSubmitBtn">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                Send Me My Free Preview
+              </button>
+            </form>
+            <div class="lead-privacy">🔒 No spam, ever. Unsubscribe anytime.</div>
+          </div>
+          <div class="lead-submitted" id="leadSubmitted">
+            <div class="lead-submitted-icon">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <div class="lead-submitted-title">You're on the list!</div>
+            <div class="lead-submitted-sub">Check your email within 24 hours for your free redesign preview.</div>
+          </div>
+        </div>
+
+        <!-- Quick Wins -->
+        <div class="sidebar-card">
+          <div class="sidebar-header"><div class="sidebar-title">⚡ Top 3 Quick Wins</div></div>
+          <div class="sidebar-body" id="quickWinsList"></div>
+        </div>
+
+        <!-- Run another -->
+        <div class="sidebar-card">
+          <div class="sidebar-body" style="text-align:center">
+            <div style="font-size:14px;font-weight:700;color:var(--dark);margin-bottom:12px">Audit another website?</div>
+            <button onclick="resetAudit()" style="background:var(--blue-50);color:var(--blue);border:1px solid rgba(37,99,235,.2);border-radius:var(--radius);padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;transition:background .2s" onmouseover="this.style.background='#DBEAFE'" onmouseout="this.style.background='var(--blue-50)'">
+              ← Start New Audit
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Bottom CTA -->
+    <div class="results-cta-bar">
+      <h3>Ready to Fix These Issues?</h3>
+      <p>We'll redesign your site, fix every problem above, and launch it within 24 hours.</p>
+      <button class="cta-btn" onclick="document.getElementById('leadName').scrollIntoView({behavior:'smooth'})">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        Get My Free Redesign Preview
+      </button>
+    </div>
+
+  </div><!-- /state-results -->
+</div><!-- /page -->
+
+<div id="toast">
+  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+  <span id="toastMsg">Done!</span>
+</div>
+
+<script>
+// ─────────────────────────────────────────
+//  SUPABASE
+// ─────────────────────────────────────────
+const SUPA_URL = 'https://wwprevympfnprxyubpfw.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3cHJldnltcGZucHJ4eXVicGZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzOTg0MzYsImV4cCI6MjA4OTk3NDQzNn0.fca6cmyuCDdAbSao20ivi906SzFvx_pHrDtTO336m2w';
+const db = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ─────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────
+let currentAuditData = null;
+let currentUrl = '';
+
+// ─────────────────────────────────────────
+//  HELPERS
+// ─────────────────────────────────────────
+function normalizeUrl(raw) {
+  raw = raw.trim();
+  if (!raw) return null;
+  if (!/^https?:\/\//i.test(raw)) raw = 'https://' + raw;
+  try { new URL(raw); return raw; } catch { return null; }
+}
+
+function scoreClass(s) {
+  if (s === null || s === undefined) return 'score-mid';
+  return s >= 80 ? 'score-good' : s >= 50 ? 'score-mid' : 'score-bad';
+}
+function scoreFill(s) {
+  if (s === null || s === undefined) return 'fill-mid';
+  return s >= 80 ? 'fill-good' : s >= 50 ? 'fill-mid' : 'fill-bad';
+}
+function scoreBg(s) {
+  if (s === null || s === undefined) return 'bg-mid';
+  return s >= 80 ? 'bg-good' : s >= 50 ? 'bg-mid' : 'bg-bad';
+}
+function scoreStroke(s) {
+  if (s === null || s === undefined) return '#F59E0B';
+  return s >= 80 ? '#10B981' : s >= 50 ? '#F59E0B' : '#EF4444';
+}
+function gradeLabel(s) {
+  if (s === null) return 'Unavailable';
+  if (s >= 90) return '🏆 Excellent';
+  if (s >= 75) return '✅ Good';
+  if (s >= 50) return '⚠️ Needs Work';
+  return '🚨 Poor';
+}
+function gradeClass(s) {
+  if (s === null) return 'grade-mid';
+  return s >= 75 ? 'grade-good' : s >= 50 ? 'grade-mid' : 'grade-bad';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+function fillExample(url) {
+  document.getElementById('urlInput').value = url;
+  document.getElementById('urlInput').focus();
+}
+
+function setState(name) {
+  ['state-input','state-loading','state-results'].forEach(id => {
+    const el = document.getElementById(id);
+    el.style.display = id === name ? (name === 'state-loading' || name === 'state-input' ? 'flex' : 'block') : 'none';
+  });
+}
+
+function setStep(stepId, status) {
+  const el = document.getElementById(stepId);
+  el.className = 'loading-step' + (status === 'active' ? ' active' : status === 'done' ? ' done' : '');
+  const statusWrap = el.querySelector('.step-status');
+  if (status === 'active') {
+    statusWrap.innerHTML = '<div class="spinner"></div>';
+  } else if (status === 'done') {
+    statusWrap.innerHTML = `<svg class="check-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`;
+  } else {
+    statusWrap.innerHTML = '<div class="step-wait"></div>';
+  }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function resetAudit() {
+  currentAuditData = null;
+  currentUrl = '';
+  document.getElementById('urlInput').value = '';
+  // Reset lead form
+  document.getElementById('leadFormWrap').style.display = 'block';
+  document.getElementById('leadSubmitted').style.display = 'none';
+  setState('state-input');
+}
+
+// ─────────────────────────────────────────
+//  AUDIT START
+// ─────────────────────────────────────────
+async function startAudit(e) {
+  e.preventDefault();
+  const raw = document.getElementById('urlInput').value;
+  const url = normalizeUrl(raw);
+  const errEl = document.getElementById('urlError');
+
+  if (!url) {
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+  currentUrl = url;
+
+  // Switch to loading
+  document.getElementById('loadingUrl').textContent = url;
+  setState('state-loading');
+  setStep('step-perf','active');
+  setStep('step-mobile','pending');
+  setStep('step-seo','pending');
+  setStep('step-conv','pending');
+
+  try {
+    // ── 1. PageSpeed (mobile + desktop in parallel)
+    const [mobileRes, desktopRes] = await Promise.allSettled([
+      fetchPageSpeed(url, 'mobile'),
+      fetchPageSpeed(url, 'desktop')
+    ]);
+    const mobile  = mobileRes.status  === 'fulfilled' ? mobileRes.value  : null;
+    const desktop = desktopRes.status === 'fulfilled' ? desktopRes.value : null;
+
+    setStep('step-perf','done'); setStep('step-mobile','active');
+    await sleep(400);
+
+    // ── 2. HTML fetch for SEO + conversion
+    const htmlData = await fetchHTMLData(url).catch(() => null);
+
+    setStep('step-mobile','done'); setStep('step-seo','active');
+    await sleep(400);
+
+    // ── 3. Compute scores
+    const perfScore  = computePerfScore(mobile);
+    const mobileScore = computeMobileScore(mobile, htmlData);
+    const seoScore   = computeSEOScore(htmlData, mobile);
+
+    setStep('step-seo','done'); setStep('step-conv','active');
+    await sleep(400);
+
+    const convScore  = computeConversionScore(htmlData, url);
+    const overall    = computeOverall(perfScore, mobileScore, seoScore, convScore);
+
+    setStep('step-conv','done');
+    await sleep(500);
+
+    // ── 4. Build issues
+    const issues = buildIssues(mobile, desktop, htmlData, url, perfScore, mobileScore, seoScore, convScore);
+    const passes = buildPasses(mobile, htmlData, url);
+    const metrics = buildMetrics(mobile);
+    const quickWins = buildQuickWins(issues);
+
+    currentAuditData = { url, perfScore, mobileScore, seoScore, convScore, overall, issues, passes, metrics, quickWins, mobile, desktop, htmlData };
+
+    // ── 5. Save partial audit (no email yet)
+    await saveAuditToSupabase({ ...currentAuditData });
+
+    // ── 6. Render
+    renderResults(currentAuditData);
+    setState('state-results');
+    window.scrollTo(0,0);
+
+  } catch(err) {
+    console.error('Audit error:', err);
+    setStep('step-perf','done');
+    setStep('step-mobile','done');
+    setStep('step-seo','done');
+    setStep('step-conv','done');
+    await sleep(500);
+    // Render with null data (fallback)
+    const fallback = { url, perfScore:null, mobileScore:null, seoScore:null, convScore:null, overall:null, issues:buildFallbackIssues(url), passes:[], metrics:[], quickWins:[] };
+    currentAuditData = fallback;
+    renderResults(fallback);
+    setState('state-results');
+  }
+}
+
+// ─────────────────────────────────────────
+//  API CALLS
+// ─────────────────────────────────────────
+async function fetchPageSpeed(url, strategy) {
+  const api = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=${strategy}&category=performance&category=seo&category=best-practices&category=accessibility`;
+  const r = await fetch(api);
+  if (!r.ok) throw new Error('PageSpeed failed');
+  return r.json();
+}
+
+async function fetchHTMLData(url) {
+  const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+  const r = await fetch(proxy, { signal: AbortSignal.timeout(10000) });
+  const html = await r.text();
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+
+  const title     = doc.querySelector('title')?.textContent?.trim() || '';
+  const metaDesc  = doc.querySelector('meta[name="description"]')?.getAttribute('content')?.trim() || '';
+  const h1        = doc.querySelector('h1')?.textContent?.trim() || '';
+  const h2s       = [...doc.querySelectorAll('h2')].map(e => e.textContent.trim());
+  const imgs      = [...doc.querySelectorAll('img')];
+  const imgsNoAlt = imgs.filter(i => !i.getAttribute('alt') || !i.getAttribute('alt').trim());
+  const canonical = !!doc.querySelector('link[rel="canonical"]');
+  const viewport  = !!doc.querySelector('meta[name="viewport"]');
+  const ogTitle   = !!doc.querySelector('meta[property="og:title"]');
+  const hasGA     = /gtag|google-analytics|GoogleAnalyticsObject|_ga/.test(html);
+  const hasGTM    = /googletagmanager\.com/.test(html);
+  const hasFB     = /connect\.facebook\.net/.test(html);
+  const phoneMatch= html.match(/(\+?1?[-.\s]?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})/g);
+  const hasPhone  = !!phoneMatch && phoneMatch.length > 0;
+  const emailMatch= html.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g);
+  const hasEmail  = !!emailMatch && emailMatch.length > 0;
+  const hasForm   = !!doc.querySelector('form');
+  const copyrightMatch = html.match(/©\s*(\d{4})/);
+  const copyrightYear = copyrightMatch ? parseInt(copyrightMatch[1]) : null;
+  const isSSL     = url.startsWith('https://');
+  const hasCTA    = /book|call|get|free|contact|quote|schedule|request|buy|order|subscribe/i.test(html);
+  const hasReviews= /review|testimonial|rating|stars|★|⭐/i.test(html);
+  const hasSchema = /<script[^>]+application\/ld\+json/i.test(html);
+  const hasRobots = !!doc.querySelector('meta[name="robots"]');
+  const linkCount = doc.querySelectorAll('a[href]').length;
+  const hasNav    = !!doc.querySelector('nav') || !!doc.querySelector('[role="navigation"]');
+  const hasSocial = /facebook\.com|twitter\.com|instagram\.com|linkedin\.com/i.test(html);
+
+  return { title, metaDesc, h1, h2s, imgs: imgs.length, imgsNoAlt: imgsNoAlt.length,
+    canonical, viewport, ogTitle, hasGA, hasGTM, hasFB, hasPhone, hasEmail, hasForm,
+    copyrightYear, isSSL, hasCTA, hasReviews, hasSchema, hasRobots, linkCount, hasNav,
+    hasSocial, rawHtmlLen: html.length };
+}
+
+// ─────────────────────────────────────────
+//  SCORE COMPUTATION
+// ─────────────────────────────────────────
+function computePerfScore(mobile) {
+  if (!mobile?.categories?.performance?.score) return null;
+  return Math.round(mobile.categories.performance.score * 100);
+}
+
+function computeMobileScore(mobile, html) {
+  let score = 0;
+  // PageSpeed mobile score (most weight)
+  const ps = mobile?.categories?.performance?.score;
+  if (ps !== undefined && ps !== null) score += Math.round(ps * 100) * 0.6;
+  // Viewport meta
+  if (html?.viewport) score += 20; else score -= 10;
+  // Mobile-friendliness check
+  const mf = mobile?.audits?.['viewport']?.score;
+  if (mf === 1) score += 20;
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function computeSEOScore(html, mobile) {
+  if (!html) {
+    // Fallback from PageSpeed SEO score
+    const ps = mobile?.categories?.seo?.score;
+    return ps !== null && ps !== undefined ? Math.round(ps * 100) : null;
+  }
+  let score = 0;
+  if (html.title)       score += 20;
+  if (html.title && html.title.length >= 30 && html.title.length <= 65) score += 10;
+  if (html.metaDesc)    score += 20;
+  if (html.metaDesc && html.metaDesc.length >= 100 && html.metaDesc.length <= 165) score += 10;
+  if (html.h1)          score += 20;
+  if (html.canonical)   score += 5;
+  if (html.ogTitle)     score += 5;
+  if (html.hasSchema)   score += 5;
+  // Image alt text
+  const altRatio = html.imgs > 0 ? (html.imgs - html.imgsNoAlt) / html.imgs : 1;
+  score += Math.round(altRatio * 10) - 5;
+  // Boost from PageSpeed SEO
+  const psSeo = mobile?.categories?.seo?.score;
+  if (psSeo !== null && psSeo !== undefined) score = Math.round(score * 0.6 + psSeo * 100 * 0.4);
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function computeConversionScore(html, url) {
+  if (!html) return null;
+  let score = 0;
+  if (html.isSSL)       score += 20;
+  if (html.hasPhone)    score += 20;
+  if (html.hasCTA)      score += 20;
+  if (html.hasForm)     score += 15;
+  if (html.hasEmail)    score += 10;
+  if (html.hasReviews)  score += 10;
+  if (html.hasNav)      score += 5;
+  // Copyright penalty
+  const curYear = new Date().getFullYear();
+  if (html.copyrightYear && (curYear - html.copyrightYear) > 3) score -= 10;
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function computeOverall(perf, mobile, seo, conv) {
+  const vals = [perf, mobile, seo, conv].filter(v => v !== null && v !== undefined);
+  if (!vals.length) return null;
+  const weights = [0.35, 0.25, 0.20, 0.20];
+  const scores  = [perf, mobile, seo, conv];
+  let weighted = 0, totalWeight = 0;
+  scores.forEach((s, i) => {
+    if (s !== null && s !== undefined) { weighted += s * weights[i]; totalWeight += weights[i]; }
+  });
+  return totalWeight > 0 ? Math.round(weighted / totalWeight) : null;
+}
+
+// ─────────────────────────────────────────
+//  ISSUE BUILDING
+// ─────────────────────────────────────────
+function buildIssues(mobile, desktop, html, url, perf, mobileScore, seo, conv) {
+  const issues = [];
+
+  // Performance issues from PageSpeed
+  if (mobile?.audits) {
+    const audits = mobile.audits;
+    const checks = [
+      { id:'speed-index',              sev:'critical', label:'Slow Speed Index',              fix:'Optimize images, enable caching, minify CSS/JS' },
+      { id:'largest-contentful-paint', sev:'critical', label:'Poor Largest Contentful Paint', fix:'Optimize the largest visible element on page load' },
+      { id:'total-blocking-time',      sev:'high',     label:'High Total Blocking Time',      fix:'Defer non-critical JavaScript and reduce JS bundles' },
+      { id:'cumulative-layout-shift',  sev:'high',     label:'Layout Shift Issues',           fix:'Set explicit dimensions for images and embeds' },
+      { id:'render-blocking-resources',sev:'high',     label:'Render-Blocking Resources',     fix:'Defer or async-load non-critical CSS and JS' },
+      { id:'uses-optimized-images',    sev:'high',     label:'Unoptimized Images',            fix:'Compress and convert images to WebP format' },
+      { id:'uses-text-compression',    sev:'medium',   label:'No Text Compression (Gzip)',    fix:'Enable Gzip or Brotli compression on your server' },
+      { id:'unused-javascript',        sev:'medium',   label:'Unused JavaScript Loaded',      fix:'Remove or defer JavaScript that isn\'t needed upfront' },
+      { id:'unused-css-rules',         sev:'medium',   label:'Unused CSS Rules',              fix:'Remove unused CSS to reduce stylesheet size' },
+      { id:'uses-long-cache-ttl',      sev:'medium',   label:'Short Cache Lifetime',          fix:'Set longer cache-control headers for static assets' },
+      { id:'efficient-animated-content',sev:'low',     label:'Inefficient Animated Content',  fix:'Replace animated GIFs with video formats (WebM/MP4)' },
+    ];
+    checks.forEach(({ id, sev, label, fix }) => {
+      const a = audits[id];
+      if (a && a.score !== null && a.score !== undefined && a.score < 0.9) {
+        const val = a.displayValue ? ` (${a.displayValue})` : '';
+        issues.push({ sev, category:'performance', title: label + val, desc: a.description?.split('.')[0] || 'This is impacting your page load speed.', fix });
+      }
+    });
+  }
+
+  // Perf score overall
+  if (perf !== null && perf < 50) {
+    issues.unshift({ sev:'critical', category:'performance', title:`Performance Score: ${perf}/100`, desc:'Your website loads very slowly. Most visitors leave before it finishes loading.', fix:'A full rebuild with modern optimization will bring this to 90+' });
+  }
+
+  // Mobile issues
+  if (html && !html.viewport) {
+    issues.push({ sev:'critical', category:'mobile', title:'No Mobile Viewport Meta Tag', desc:'Your website is not configured for mobile devices. It will appear tiny and broken on smartphones.', fix:'Add <meta name="viewport" content="width=device-width, initial-scale=1"> to your HTML' });
+  }
+  if (mobileScore !== null && mobileScore < 50) {
+    issues.push({ sev:'critical', category:'mobile', title:'Poor Mobile Experience', desc:'Your site does not work well on mobile devices, which account for 60%+ of local business searches.', fix:'A responsive rebuild will make your site perfect on all screen sizes' });
+  }
+
+  // SEO issues
+  if (html) {
+    if (!html.title) issues.push({ sev:'critical', category:'seo', title:'Missing Page Title', desc:'Your page has no title tag. This is one of the most important SEO factors.', fix:'Add a descriptive, keyword-rich title (50-65 characters)' });
+    else if (html.title.length < 30) issues.push({ sev:'high', category:'seo', title:`Title Too Short (${html.title.length} chars)`, desc:`"${html.title.substring(0,40)}" — titles should be 50-65 characters for best SEO impact.`, fix:'Expand your title to include your business name and primary keyword' });
+    else if (html.title.length > 65) issues.push({ sev:'medium', category:'seo', title:`Title Too Long (${html.title.length} chars)`, desc:'Google will truncate your title in search results, cutting off important keywords.', fix:'Shorten your title to under 65 characters' });
+
+    if (!html.metaDesc) issues.push({ sev:'high', category:'seo', title:'Missing Meta Description', desc:'No meta description found. This is the text Google shows under your site in search results — it directly affects click-through rates.', fix:'Write a compelling 120-160 character description of your business' });
+
+    if (!html.h1) issues.push({ sev:'high', category:'seo', title:'No H1 Heading Found', desc:'Your page is missing an H1 heading, which tells search engines what your page is about.', fix:'Add one clear H1 heading with your primary keyword' });
+
+    if (html.imgsNoAlt > 0) issues.push({ sev:'medium', category:'seo', title:`${html.imgsNoAlt} Image${html.imgsNoAlt > 1 ? 's' : ''} Missing Alt Text`, desc:'Images without alt text are invisible to Google and inaccessible to screen readers.', fix:'Add descriptive alt text to every image' });
+
+    if (!html.canonical) issues.push({ sev:'low', category:'seo', title:'No Canonical Tag', desc:'Missing canonical tags can cause duplicate content issues and dilute your SEO.', fix:'Add a canonical URL tag to each page' });
+
+    if (!html.ogTitle) issues.push({ sev:'low', category:'seo', title:'Missing Open Graph Tags', desc:'Without OG tags, your site will look generic when shared on Facebook, LinkedIn, etc.', fix:'Add og:title, og:description, and og:image tags' });
+  }
+
+  // Conversion issues
+  if (html) {
+    if (!html.isSSL) issues.push({ sev:'critical', category:'conversion', title:'No SSL Certificate (HTTP)', desc:'Your site is not secure. Browsers show a "Not Secure" warning, and 85% of visitors abandon non-HTTPS sites.', fix:'Install an SSL certificate to enable HTTPS (often free with Let\'s Encrypt)' });
+    if (!html.hasPhone) issues.push({ sev:'high', category:'conversion', title:'No Phone Number Found', desc:'Local business visitors want to call you. No visible phone number means lost customers.', fix:'Add a prominent, clickable phone number in your header and footer' });
+    if (!html.hasCTA) issues.push({ sev:'high', category:'conversion', title:'No Clear Call-to-Action', desc:'Visitors don\'t know what to do next. Without a CTA, they simply leave.', fix:'Add clear CTAs like "Call Now", "Get a Free Quote", or "Book an Appointment"' });
+    if (!html.hasForm) issues.push({ sev:'medium', category:'conversion', title:'No Contact Form Found', desc:'Without a form, you\'re missing leads from visitors who prefer to write rather than call.', fix:'Add a simple contact or lead capture form' });
+    if (!html.hasReviews) issues.push({ sev:'medium', category:'conversion', title:'No Social Proof / Reviews', desc:'Visitors need to see that others trust you. No testimonials or reviews = no credibility.', fix:'Add customer testimonials, star ratings, or Google review widgets' });
+    const yr = html.copyrightYear;
+    const cur = new Date().getFullYear();
+    if (yr && (cur - yr) > 3) issues.push({ sev:'medium', category:'conversion', title:`Outdated Copyright Year (${yr})`, desc:'An old copyright year signals your site is abandoned and your business may not be active.', fix:'Update the copyright year in your footer' });
+    if (!html.hasGA && !html.hasGTM) issues.push({ sev:'low', category:'conversion', title:'No Analytics Tracking', desc:'You can\'t improve what you don\'t measure. Without analytics, you\'re flying blind.', fix:'Install Google Analytics or Google Tag Manager' });
+  }
+
+  // Sort: critical → high → medium → low
+  const order = { critical:0, high:1, medium:2, low:3 };
+  issues.sort((a,b) => order[a.sev] - order[b.sev]);
+  return issues;
+}
+
+function buildFallbackIssues(url) {
+  const isHTTPS = url.startsWith('https://');
+  return [
+    { sev:'critical', category:'performance', title:'Performance data unavailable', desc:'We couldn\'t fetch live performance data for this URL (the site may block automated requests).', fix:'Contact us for a manual audit of this website' },
+    ...(!isHTTPS ? [{ sev:'critical', category:'conversion', title:'No SSL (HTTP site)', desc:'Your site uses HTTP which browsers flag as Not Secure.', fix:'Install an SSL certificate immediately' }] : []),
+  ];
+}
+
+function buildPasses(mobile, html) {
+  const passes = [];
+  if (html?.isSSL) passes.push({ label:'HTTPS / SSL Active', icon:'shield' });
+  if (html?.viewport) passes.push({ label:'Mobile Viewport Tag Present', icon:'check' });
+  if (html?.hasGA || html?.hasGTM) passes.push({ label:'Analytics Tracking Installed', icon:'check' });
+  if (html?.title && html.title.length >= 30 && html.title.length <= 65) passes.push({ label:'Page Title Optimized', icon:'check' });
+  if (html?.metaDesc) passes.push({ label:'Meta Description Present', icon:'check' });
+  if (html?.h1) passes.push({ label:'H1 Heading Found', icon:'check' });
+  if (html?.canonical) passes.push({ label:'Canonical Tag Present', icon:'check' });
+  if (html?.hasPhone) passes.push({ label:'Phone Number Found', icon:'check' });
+  if (html?.hasForm) passes.push({ label:'Contact Form Present', icon:'check' });
+  if (html?.hasReviews) passes.push({ label:'Social Proof / Reviews Found', icon:'check' });
+  if (html?.hasSchema) passes.push({ label:'Structured Data (Schema) Present', icon:'check' });
+  const ps = mobile?.categories?.performance?.score;
+  if (ps >= 0.9) passes.push({ label:'Excellent Performance Score', icon:'check' });
+  return passes;
+}
+
+function buildMetrics(mobile) {
+  if (!mobile?.audits) return [];
+  const a = mobile.audits;
+  const metrics = [];
+  const add = (key, label, goodThresh, badThresh, unit='') => {
+    const audit = a[key];
+    if (!audit?.displayValue) return;
+    const val = audit.numericValue;
+    let status = 'good', color = '#10B981';
+    if (val > badThresh) { status = 'poor'; color = '#EF4444'; }
+    else if (val > goodThresh) { status = 'needs-work'; color = '#F59E0B'; }
+    metrics.push({ label, value: audit.displayValue, status, color });
+  };
+  add('first-contentful-paint',    'First Contentful Paint',   1800,  3000);
+  add('largest-contentful-paint',  'Largest Contentful Paint', 2500,  4000);
+  add('total-blocking-time',       'Total Blocking Time',       200,   600);
+  add('cumulative-layout-shift',   'Cumulative Layout Shift',   0.1,   0.25);
+  add('speed-index',               'Speed Index',               3400,  5800);
+  add('interactive',               'Time to Interactive',       3800,  7300);
+  return metrics;
+}
+
+function buildQuickWins(issues) {
+  return issues
+    .filter(i => ['critical','high'].includes(i.sev))
+    .slice(0, 3)
+    .map(i => ({ title: i.title.split('(')[0].trim(), impact: i.fix }));
+}
+
+// ─────────────────────────────────────────
+//  RENDER RESULTS
+// ─────────────────────────────────────────
+function renderResults(data) {
+  const { url, perfScore, mobileScore, seoScore, convScore, overall, issues, passes, metrics, quickWins } = data;
+
+  // URL
+  document.getElementById('resultUrl').textContent = url;
+  const issueCount = issues.length;
+  const sevCounts = { critical:0, high:0, medium:0, low:0 };
+  issues.forEach(i => sevCounts[i.sev] = (sevCounts[i.sev]||0)+1);
+  document.getElementById('resultSubline').textContent =
+    `${issueCount} issues found — ${sevCounts.critical} critical, ${sevCounts.high} high priority`;
+
+  // Overall score ring
+  const o = overall ?? 50;
+  const circumference = 2 * Math.PI * 60; // 377
+  const offset = circumference - (o / 100) * circumference;
+  const ring = document.getElementById('overallRingFill');
+  ring.style.stroke = scoreStroke(o);
+  setTimeout(() => { ring.style.strokeDashoffset = offset; }, 100);
+  document.getElementById('overallScoreNum').textContent = overall ?? '?';
+  document.getElementById('overallScoreNum').className = 'score-ring-num ' + scoreClass(overall);
+  const gradeEl = document.getElementById('overallGrade');
+  gradeEl.textContent = gradeLabel(overall);
+  gradeEl.className = 'overall-grade ' + gradeClass(overall);
+
+  // Category scores
+  const cats = [
+    { score: perfScore,   numId:'catScorePerf',   barId:'catBarPerf',   iconId:'catIconPerf'   },
+    { score: mobileScore, numId:'catScoreMobile',  barId:'catBarMobile', iconId:'catIconMobile' },
+    { score: seoScore,    numId:'catScoreSeo',     barId:'catBarSeo',    iconId:'catIconSeo'    },
+    { score: convScore,   numId:'catScoreConv',    barId:'catBarConv',   iconId:'catIconConv'   },
+  ];
+  cats.forEach(({ score, numId, barId, iconId }) => {
+    const s = score ?? 0;
+    const numEl = document.getElementById(numId);
+    numEl.textContent = score ?? '?';
+    numEl.className = 'cat-score-num ' + scoreClass(score);
+    const iconEl = document.getElementById(iconId);
+    iconEl.className = 'cat-icon ' + scoreBg(score);
+    const barEl = document.getElementById(barId);
+    barEl.className = 'cat-bar-fill ' + scoreFill(score);
+    setTimeout(() => { barEl.style.width = s + '%'; }, 200);
+  });
+
+  // Issues
+  const issuesEl = document.getElementById('issuesList');
+  document.getElementById('issueCount').textContent = `${issueCount} issue${issueCount !== 1 ? 's' : ''} found`;
+  if (issues.length === 0) {
+    issuesEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--gray-500);font-size:15px;">🎉 No major issues found! Great work.</div>';
+  } else {
+    issuesEl.innerHTML = issues.map(i => `
+      <div class="issue-item sev-${i.sev}">
+        <div class="issue-sev-dot"></div>
+        <div class="issue-body">
+          <div class="issue-title">${i.title}</div>
+          <div class="issue-desc">${i.desc}</div>
+          <div class="issue-fix">${i.fix}</div>
+        </div>
+        <div class="issue-badge badge-${i.sev}">${i.sev.charAt(0).toUpperCase()+i.sev.slice(1)}</div>
+      </div>
+    `).join('');
+  }
+
+  // Metrics
+  const metricsEl = document.getElementById('metricsList');
+  if (metrics.length === 0) {
+    metricsEl.innerHTML = '<div style="padding:20px 24px;color:var(--gray-500);font-size:14px;">Performance metrics unavailable for this URL.</div>';
+  } else {
+    metricsEl.innerHTML = metrics.map(m => `
+      <div class="metric-row">
+        <div class="metric-name">${m.label}</div>
+        <div style="display:flex;align-items:center">
+          <div class="metric-value" style="color:${m.color}">${m.value}</div>
+          <div class="metric-status" style="background:${m.color}20;color:${m.color}">${m.status}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Passes
+  const passesEl = document.getElementById('passesList');
+  document.getElementById('passCount').textContent = `${passes.length} check${passes.length !== 1 ? 's' : ''} passed`;
+  if (passes.length === 0) {
+    passesEl.innerHTML = '<div style="padding:12px 24px;color:var(--gray-500);font-size:14px;">No checks passed — your site needs significant work.</div>';
+  } else {
+    passesEl.innerHTML = passes.map(p => `
+      <div class="check-item check-pass" style="padding:10px 24px">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        ${p.label}
+      </div>
+    `).join('');
+  }
+
+  // Quick Wins
+  const qwEl = document.getElementById('quickWinsList');
+  if (quickWins.length === 0) {
+    qwEl.innerHTML = '<div style="font-size:14px;color:var(--gray-500)">Your site is performing well!</div>';
+  } else {
+    qwEl.innerHTML = quickWins.map((w, i) => `
+      <div class="win-item">
+        <div class="win-num">${i+1}</div>
+        <div>
+          <div class="win-title">${w.title}</div>
+          <div class="win-impact">${w.impact}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+// ─────────────────────────────────────────
+//  SUPABASE SAVE
+// ─────────────────────────────────────────
+async function saveAuditToSupabase(data, extraFields = {}) {
+  try {
+    const mobile = data.mobile;
+    const html   = data.htmlData;
+    const row = {
+      website_url:      data.url,
+      performance_score:data.perfScore,
+      mobile_score:     data.mobileScore,
+      seo_score:        data.seoScore,
+      conversion_score: data.convScore,
+      overall_score:    data.overall,
+      load_time_ms:     mobile?.audits?.['interactive']?.numericValue ? Math.round(mobile.audits['interactive'].numericValue) : null,
+      lcp_ms:           mobile?.audits?.['largest-contentful-paint']?.numericValue ? Math.round(mobile.audits['largest-contentful-paint'].numericValue) : null,
+      cls_value:        mobile?.audits?.['cumulative-layout-shift']?.numericValue ?? null,
+      tbt_ms:           mobile?.audits?.['total-blocking-time']?.numericValue ? Math.round(mobile.audits['total-blocking-time'].numericValue) : null,
+      issues:           data.issues ?? [],
+      seo_data:         html ? { title: html.title, metaDesc: html.metaDesc, h1: html.h1, viewport: html.viewport, canonical: html.canonical, imgsNoAlt: html.imgsNoAlt } : null,
+      conversion_data:  html ? { isSSL: html.isSSL, hasPhone: html.hasPhone, hasCTA: html.hasCTA, hasForm: html.hasForm, hasReviews: html.hasReviews, copyrightYear: html.copyrightYear } : null,
+      ...extraFields,
+    };
+    const { data: saved, error } = await db.from('audit_leads').insert([row]).select().single();
+    if (error) console.warn('Supabase save error:', error.message);
+    return saved;
+  } catch(err) {
+    console.warn('Save failed:', err);
+    return null;
+  }
+}
+
+// ─────────────────────────────────────────
+//  LEAD FORM SUBMIT
+// ─────────────────────────────────────────
+async function submitLead(e) {
+  e.preventDefault();
+  const btn   = document.getElementById('leadSubmitBtn');
+  const name  = document.getElementById('leadName').value.trim();
+  const email = document.getElementById('leadEmail').value.trim();
+  const biz   = document.getElementById('leadBizType').value;
+
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner" style="border-color:rgba(255,255,255,.3);border-top-color:#fff;width:18px;height:18px;border-width:2px"></div> Sending…';
+
+  const nameParts = name.split(' ');
+  const firstName = nameParts[0] || '';
+  const lastName  = nameParts.slice(1).join(' ') || '';
+
+  await saveAuditToSupabase(currentAuditData, {
+    first_name:    firstName,
+    last_name:     lastName,
+    email:         email,
+    business_type: biz,
+    status:        'new',
+  });
+
+  // Fire email notification (non-blocking — don't await so UI isn't delayed)
+  db.functions.invoke('notify-new-lead', {
+    body: {
+      website_url:   currentAuditData?.website_url || document.getElementById('urlInput')?.value || '',
+      email:         email,
+      first_name:    firstName,
+      last_name:     lastName,
+      overall_score: currentAuditData?.overall_score ?? null,
+      issues_count:  Array.isArray(currentAuditData?.issues) ? currentAuditData.issues.length : 0,
+      business_type: biz || 'Not specified',
+    },
+  }).catch(err => console.warn('Email notification skipped:', err));
+
+  // Show success
+  document.getElementById('leadFormWrap').style.display = 'none';
+  document.getElementById('leadSubmitted').style.display = 'block';
+  showToast('✅ Request received! Check your email within 24 hours.');
+}
+</script>
+</body>
+</html>
