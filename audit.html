@@ -3,8 +3,28 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Free Website Audit — SiteRevive AI</title>
-  <meta name="description" content="Get a free AI-powered audit of your website in seconds. See performance, SEO, mobile, and conversion scores instantly."/>
+  <title>Free Website Audit Tool — Check Your Site in 30 Seconds | SiteRevive AI</title>
+  <meta name="description" content="Free AI website audit tool for small businesses. Check performance, SEO, mobile experience, and conversion signals in under 30 seconds. No signup needed."/>
+  <meta name="keywords" content="free website audit, website checker, website performance test, SEO audit tool, mobile-friendly test, small business website check"/>
+  <link rel="canonical" href="https://siterevive-ai.vercel.app/audit"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:url" content="https://siterevive-ai.vercel.app/audit"/>
+  <meta property="og:title" content="Free Website Audit — Check Your Site in 30 Seconds"/>
+  <meta property="og:description" content="Find out what's wrong with your website for free. Performance, SEO, mobile, and conversion analysis in under 30 seconds."/>
+  <meta property="og:image" content="https://siterevive-ai.vercel.app/og-image.png"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="Free Website Audit Tool | SiteRevive AI"/>
+  <meta name="twitter:description" content="Check your website's performance, SEO, and mobile experience in 30 seconds. Free for small businesses."/>
+
+  <!-- Google Analytics 4 — replace G-5PT5JH4CNK with your Measurement ID -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-5PT5JH4CNK"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-5PT5JH4CNK');
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
@@ -738,6 +758,11 @@ async function startAudit(e) {
     errEl.style.display = 'block';
     return;
   }
+
+  // GA4: track audit started
+  if (typeof gtag !== 'undefined') {
+    gtag('event', 'audit_started', { website_url: url });
+  }
   errEl.style.display = 'none';
   currentUrl = url;
 
@@ -1252,6 +1277,15 @@ async function submitLead(e) {
       business_type: biz || 'Not specified',
     },
   }).catch(err => console.warn('Email notification skipped:', err));
+
+  // GA4: track lead submitted
+  if (typeof gtag !== 'undefined') {
+    gtag('event', 'lead_submitted', {
+      business_type: biz,
+      overall_score: currentAuditData?.overall_score ?? null,
+    });
+    gtag('event', 'conversion', { send_to: 'G-5PT5JH4CNK/lead' });
+  }
 
   // Show success
   document.getElementById('leadFormWrap').style.display = 'none';
